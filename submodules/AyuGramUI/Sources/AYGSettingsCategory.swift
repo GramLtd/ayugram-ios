@@ -14,6 +14,7 @@ public enum AYGSettingsCategory: Int, CaseIterable {
     case spy
     case filters
     case customization
+    case plugins
 
     public var title: String {
         switch self {
@@ -21,6 +22,7 @@ public enum AYGSettingsCategory: Int, CaseIterable {
         case .spy: return aygString("CategorySpy")
         case .filters: return aygString("CategoryFilters")
         case .customization: return aygString("CategoryCustomization")
+        case .plugins: return aygString("CategoryPlugins")
         }
     }
 
@@ -32,6 +34,8 @@ public enum AYGSettingsCategory: Int, CaseIterable {
         case .spy: return "AyuGram/AYGSpy"
         case .filters: return "AyuGram/AYGFilters"
         case .customization: return "AyuGram/AYGCustomization"
+        // exteraGram's plugins entry; no AyuGram drawable exists for it.
+        case .plugins: return "Chat/Context Menu/FormatCode"
         }
     }
 
@@ -41,6 +45,7 @@ public enum AYGSettingsCategory: Int, CaseIterable {
 }
 
 public enum AYGSettingsLink: Int, CaseIterable {
+    case developer
     case channel
     case chats
     case translate
@@ -48,6 +53,7 @@ public enum AYGSettingsLink: Int, CaseIterable {
 
     public var title: String {
         switch self {
+        case .developer: return aygString("AYGLinkDeveloper")
         case .channel: return aygString("AYGLinkChannel")
         case .chats: return aygString("AYGLinkChats")
         case .translate: return aygString("AYGLinkTranslate")
@@ -57,6 +63,7 @@ public enum AYGSettingsLink: Int, CaseIterable {
 
     public var value: String {
         switch self {
+        case .developer: return aygDeveloperUsername
         // The channel row shows the channel's name rather than its username.
         case .channel: return "GCONNECT"
         case .chats: return "@gconnectpublic"
@@ -69,6 +76,7 @@ public enum AYGSettingsLink: Int, CaseIterable {
     // AYGSettingsController for why.
     public var username: String? {
         switch self {
+        case .developer: return String(aygDeveloperUsername.dropFirst())
         case .channel: return "g_tweaks"
         case .chats: return "gconnectpublic"
         case .translate, .documentation: return nil
@@ -77,7 +85,7 @@ public enum AYGSettingsLink: Int, CaseIterable {
 
     public var url: String? {
         switch self {
-        case .channel, .chats: return nil
+        case .developer, .channel, .chats: return nil
         // the only link stored unobfuscated in the APK
         case .translate: return "https://crowdin.com/project/exteralocales"
         case .documentation: return "https://ayugram.one"
@@ -87,6 +95,7 @@ public enum AYGSettingsLink: Int, CaseIterable {
     // Android: msg_channel, msg_groups, msg_translate, msg_language.
     var iconName: String {
         switch self {
+        case .developer: return "Chat/Context Menu/User"
         case .channel: return "AyuGram/AYGChannel"
         case .chats: return "AyuGram/AYGChats"
         case .translate: return "AyuGram/AYGTranslate"

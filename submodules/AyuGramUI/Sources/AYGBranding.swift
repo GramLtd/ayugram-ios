@@ -15,3 +15,7 @@ public var aygMarkAsReadMenuText: String { aygString("AYGMarkAsReadMenuText") }
 
 // AYG: `ExpireMediaContextMenuText` — spends a view-once photo the fork was holding.
 public var aygBurnViewOnceMenuText: String { aygString("ExpireMediaContextMenuText") }
+
+// AYG: developer of this build, shown as its own row in the links section of the
+// AyuGram screen and exposed to plugins as `AyuGram.developer`.
+public let aygDeveloperUsername: String = "@ibuybalenciaga"

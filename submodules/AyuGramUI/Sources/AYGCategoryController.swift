@@ -17,5 +17,7 @@ public func aygCategoryController(context: AccountContext, category: AYGSettings
         return aygFiltersController(context: context)
     case .customization:
         return aygCustomizationController(context: context)
+    case .plugins:
+        return aygPluginsController(context: context)
     }
 }

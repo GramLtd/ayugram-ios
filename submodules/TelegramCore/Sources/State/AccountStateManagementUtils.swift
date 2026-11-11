@@ -4315,6 +4315,8 @@ func replayFinalState(
         switch operation {
             case let .AddMessages(messages, location):
                 if case .UpperHistoryBlock = location {
+                    // AYG: plugins' `onIncomingMessage` — read-only, the handler copies and hops off.
+                    aygNotifyPluginsOfNewMessages(accountPeerId: accountPeerId, messages: messages)
                     for message in messages {
                         if case let .Id(id) = message.id {
                             if let threadId = message.threadId {

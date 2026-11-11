@@ -206,6 +206,8 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         // AYG: and keep AyuGram's own strings on Telegram's language rather than the
         // system's — the two differ whenever the user has set a language in-app.
         aygObserveStringsLanguage(context: self.context)
+        // AYG: start the plugin engine (exteraGram plugins) for this account.
+        AYGPluginManager.shared.start(context: self.context)
 
         let tabBarController = TabBarControllerImpl(theme: self.presentationData.theme, strings: self.presentationData.strings)
         tabBarController.navigationPresentation = .master

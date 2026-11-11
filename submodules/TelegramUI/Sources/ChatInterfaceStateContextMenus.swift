@@ -2198,6 +2198,27 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
 
+        // AYG: plugins' message context menu items — exteraGram's
+        // `add_menu_item(MenuItemType.MESSAGE_CONTEXT_MENU, ...)`.
+        if messages.count == 1, !aygIsHistoryScreen {
+            let aygPluginMenuItems = AYGPluginManager.shared.menuItems(type: .messageContextMenu)
+            if !aygPluginMenuItems.isEmpty {
+                if !actions.isEmpty {
+                    actions.append(.separator)
+                }
+                let aygPluginMessage = message
+                for aygPluginMenuItem in aygPluginMenuItems {
+                    actions.append(.action(ContextMenuActionItem(text: aygPluginMenuItem.text, icon: { theme in
+                        let image = aygPluginMenuItem.icon.flatMap { UIImage(bundleImageName: $0) } ?? UIImage(bundleImageName: "Chat/Context Menu/FormatCode")
+                        return generateTintedImage(image: image, color: theme.actionSheet.primaryTextColor)
+                    }, action: { _, f in
+                        f(.dismissWithoutContent)
+                        AYGPluginManager.shared.menuItemTapped(aygPluginMenuItem, message: aygPluginMessage)
+                    })))
+                }
+            }
+        }
+
         if !isPinnedMessages, !isReplyThreadHead, data.canSelect {
             var didAddSeparator = false
             if !selectAll || messages.count == 1 {

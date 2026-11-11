@@ -703,7 +703,14 @@ public func enqueueMessages(account: Account, peerId: PeerId, messages: [Enqueue
     // controller, because this is the funnel every send goes through — the input panel,
     // the forward picker, the share sheet, media recording. Applying them one layer up
     // would mean finding and patching each of those separately, and missing one is a leak.
-    let messages = aygApplyGhostModeSendOptions(account: account, peerId: peerId, messages: messages)
+    let aygGhostMessages = aygApplyGhostModeSendOptions(account: account, peerId: peerId, messages: messages)
+    // AYG: plugins' `onSendMessageHook` (exteraGram's `on_send_message_hook`) — may
+    // rewrite or cancel messages. Ids are spread back over the original batch below.
+    let aygPluginResult = aygApplyPluginSendHooks(account: account, peerId: peerId, messages: aygGhostMessages)
+    if aygPluginResult.messages.isEmpty && !aygGhostMessages.isEmpty {
+        return .single(aygPluginResult.restore([]))
+    }
+    let messages = aygPluginResult.messages
 
     let signal: Signal<[(Bool, EnqueueMessage)], NoError>
     if let transformOutgoingMessageMedia = account.transformOutgoingMessageMedia {
@@ -778,6 +785,9 @@ public func enqueueMessages(account: Account, peerId: PeerId, messages: [Enqueue
             }
             return messageIds
         }
+    }
+    |> map { messageIds -> [MessageId?] in
+        return aygPluginResult.restore(messageIds)
     }
 }
 
