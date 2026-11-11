@@ -1,0 +1,118 @@
+name: Build IPA
+
+# Unsigned (fake-signed) AyuGram IPA for sideloading (AltStore / Sideloadly /
+# TrollStore / own certificate). Built on every push to a claude/** branch and on
+# demand; the IPA is attached to the run as the "AyuGram-ipa" artifact.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   TELEGRAM_API_ID, TELEGRAM_API_HASH — the fork's own pair from my.telegram.org.
+# Telegram's public test pair is deliberately not used: it gets real accounts banned
+# (see build-system/XTGBuildRelease.sh).
+
+on:
+  push:
+    branches: [ 'claude/**' ]
+  workflow_dispatch:
+
+concurrency:
+  group: build-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 360
+
+    steps:
+      - name: Check secrets
+        env:
+          API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        run: |
+          if [ -z "$API_ID" ] || [ -z "$API_HASH" ]; then
+            echo "::error::Set the TELEGRAM_API_ID and TELEGRAM_API_HASH repository secrets (my.telegram.org → API development tools)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Fetch submodules
+        run: |
+          set -x
+          # Two submodules use URLs relative to the repository, which only resolve on
+          # Telegram's own GitHub organisation; point them at the upstream copies.
+          git config --file .gitmodules submodule.submodules/rlottie/rlottie.url https://github.com/TelegramMessenger/rlottie.git
+          git config --file .gitmodules submodule.submodules/TgVoipWebrtc/tgcalls.url https://github.com/TelegramMessenger/tgcalls.git
+          git submodule sync --recursive
+          git submodule update --init --recursive --jobs 8
+
+      - name: Select Xcode
+        run: |
+          WANTED=$(python3 -c 'import json;print(json.load(open("versions.json"))["xcode"])')
+          if [ -d "/Applications/Xcode_${WANTED}.app" ]; then
+            XCODE="/Applications/Xcode_${WANTED}.app"
+          else
+            XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+            echo "::warning::Xcode ${WANTED} is not installed on the runner, using ${XCODE}"
+          fi
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - name: Write build configuration
+        env:
+          API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        run: |
+          mkdir -p build-input
+          # bundle_id / team_id must match the fake-codesigning profiles; a sideloading
+          # tool re-signs the app under your own bundle id anyway.
+          python3 - <<'EOF'
+          import json, os
+          config = json.load(open("build-system/appstore-configuration.json"))
+          config["api_id"] = os.environ["API_ID"]
+          config["api_hash"] = os.environ["API_HASH"]
+          config["is_appstore_build"] = "false"
+          config["enable_icloud"] = False
+          config["enable_siri"] = False
+          json.dump(config, open("build-input/ci-configuration.json", "w"), indent=2)
+          EOF
+
+      - name: Bazel cache
+        uses: actions/cache@v4
+        with:
+          path: ~/telegram-bazel-cache
+          key: bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}-${{ github.sha }}
+          restore-keys: |
+            bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}-
+
+      - name: Build
+        run: |
+          set -x
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+          build-system/XTGXcodeConfig.sh
+          BUILD_NUMBER=$(( $(git rev-list --count HEAD) + $(cat build_number_offset) ))
+          python3 -u build-system/Make/Make.py --overrideXcodeVersion \
+            --cacheDir ~/telegram-bazel-cache \
+            build \
+            --configurationPath build-input/ci-configuration.json \
+            --codesigningInformationPath build-system/fake-codesigning \
+            --flavor ayu \
+            --buildNumber="$BUILD_NUMBER" \
+            --configuration=release_arm64
+
+      - name: Collect IPA
+        run: |
+          mkdir -p artifacts
+          IPA=$(find -L bazel-out -path '*/bin/Telegram/Telegram.ipa' -print 2>/dev/null | head -1)
+          [ -n "$IPA" ] || IPA=bazel-bin/Telegram/Telegram.ipa
+          cp "$IPA" artifacts/AyuGram.ipa
+          ls -la artifacts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AyuGram-ipa
+          path: artifacts/AyuGram.ipa
+          retention-days: 30
