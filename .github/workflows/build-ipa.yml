@@ -80,8 +80,10 @@ jobs:
           json.dump(config, open("build-input/ci-configuration.json", "w"), indent=2)
           EOF
 
-      - name: Bazel cache
-        uses: actions/cache@v4
+      # Restore and save separately so the cache is kept even when the build fails:
+      # a failed run then still speeds up the next attempt.
+      - name: Restore Bazel cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/telegram-bazel-cache
           key: bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}-${{ github.sha }}
@@ -102,6 +104,13 @@ jobs:
             --flavor ayu \
             --buildNumber="$BUILD_NUMBER" \
             --configuration=release_arm64
+
+      - name: Save Bazel cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/telegram-bazel-cache
+          key: bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}-${{ github.sha }}-${{ github.run_attempt }}
 
       - name: Collect IPA
         run: |
