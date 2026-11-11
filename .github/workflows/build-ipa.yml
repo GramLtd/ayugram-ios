@@ -4,10 +4,10 @@ name: Build IPA
 # TrollStore / own certificate). Built on every push to a claude/** branch and on
 # demand; the IPA is attached to the run as the "AyuGram-ipa" artifact.
 #
-# Required repository secrets (Settings → Secrets and variables → Actions):
+# Optional repository secrets (Settings → Secrets and variables → Actions):
 #   TELEGRAM_API_ID, TELEGRAM_API_HASH — the fork's own pair from my.telegram.org.
-# Telegram's public test pair is deliberately not used: it gets real accounts banned
-# (see build-system/XTGBuildRelease.sh).
+# Without them the pair in build-system/appstore-configuration.json is used, which is
+# Telegram's public one and risks account bans (see build-system/XTGBuildRelease.sh).
 
 on:
   push:
@@ -30,8 +30,7 @@ jobs:
           API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
         run: |
           if [ -z "$API_ID" ] || [ -z "$API_HASH" ]; then
-            echo "::error::Set the TELEGRAM_API_ID and TELEGRAM_API_HASH repository secrets (my.telegram.org → API development tools)."
-            exit 1
+            echo "::warning::TELEGRAM_API_ID / TELEGRAM_API_HASH secrets are not set; using the api pair from build-system/appstore-configuration.json (Telegram's public pair, risk of account bans)."
           fi
 
       - uses: actions/checkout@v4
@@ -72,8 +71,9 @@ jobs:
           python3 - <<'EOF'
           import json, os
           config = json.load(open("build-system/appstore-configuration.json"))
-          config["api_id"] = os.environ["API_ID"]
-          config["api_hash"] = os.environ["API_HASH"]
+          if os.environ.get("API_ID") and os.environ.get("API_HASH"):
+              config["api_id"] = os.environ["API_ID"]
+              config["api_hash"] = os.environ["API_HASH"]
           config["is_appstore_build"] = "false"
           config["enable_icloud"] = False
           config["enable_siri"] = False
