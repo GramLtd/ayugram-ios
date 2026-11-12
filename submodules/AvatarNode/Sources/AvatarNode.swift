@@ -42,6 +42,15 @@ public enum AvatarNodeClipStyle {
     case bubble
 }
 
+// AYG: exteraGram's avatar corners. Only the stock circle is reshaped — a forum's
+// rounded square, a bubble or an unclipped avatar keep whatever their call site asked for.
+public func aygEffectiveAvatarClipStyle(_ clipStyle: AvatarNodeClipStyle) -> AvatarNodeClipStyle {
+    if case .round = clipStyle, AYGExteraManager.shared.avatarShape == .roundedSquare {
+        return .roundedRect
+    }
+    return clipStyle
+}
+
 private class AvatarNodeParameters: NSObject {
     let theme: PresentationTheme?
     let accountPeerId: EnginePeer.Id?
@@ -585,12 +594,14 @@ public final class AvatarNode: ASDisplayNode {
             authorOfMessage: MessageReference? = nil,
             overrideImage: AvatarNodeImageOverride? = nil,
             emptyColor: UIColor? = nil,
-            clipStyle: AvatarNodeClipStyle = .round,
+            clipStyle requestedClipStyle: AvatarNodeClipStyle = .round,
             synchronousLoad: Bool = false,
             displayDimensions: CGSize = CGSize(width: 60.0, height: 60.0),
             storeUnrounded: Bool = false,
             cutoutRect: CGRect? = nil
         ) {
+            // AYG: exteraGram's avatar corners.
+            let clipStyle = aygEffectiveAvatarClipStyle(requestedClipStyle)
             var synchronousLoad = synchronousLoad
             var representation: TelegramMediaImageRepresentation?
             var icon = AvatarNodeIcon.none
@@ -714,11 +725,13 @@ public final class AvatarNode: ASDisplayNode {
             authorOfMessage: MessageReference? = nil,
             overrideImage: AvatarNodeImageOverride? = nil,
             emptyColor: UIColor? = nil,
-            clipStyle: AvatarNodeClipStyle = .round,
+            clipStyle requestedClipStyle: AvatarNodeClipStyle = .round,
             synchronousLoad: Bool = false,
             displayDimensions: CGSize = CGSize(width: 60.0, height: 60.0),
             storeUnrounded: Bool = false
         ) {
+            // AYG: exteraGram's avatar corners.
+            let clipStyle = aygEffectiveAvatarClipStyle(requestedClipStyle)
             let smallProfileImage = peer?.smallProfileImage
             let params = Params(
                 peerId: peer?.id,
@@ -792,12 +805,14 @@ public final class AvatarNode: ASDisplayNode {
             authorOfMessage: MessageReference? = nil,
             overrideImage: AvatarNodeImageOverride? = nil,
             emptyColor: UIColor? = nil,
-            clipStyle: AvatarNodeClipStyle = .round,
+            clipStyle requestedClipStyle: AvatarNodeClipStyle = .round,
             synchronousLoad: Bool = false,
             displayDimensions: CGSize = CGSize(width: 60.0, height: 60.0),
             storeUnrounded: Bool = false,
             cutoutRect: CGRect? = nil
         ) {
+            // AYG: exteraGram's avatar corners.
+            let clipStyle = aygEffectiveAvatarClipStyle(requestedClipStyle)
             var synchronousLoad = synchronousLoad
             var representation: TelegramMediaImageRepresentation?
             var icon = AvatarNodeIcon.none

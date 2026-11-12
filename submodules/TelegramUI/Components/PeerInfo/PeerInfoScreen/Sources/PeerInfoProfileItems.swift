@@ -900,6 +900,21 @@ func infoItems(
         }
     }
     
+    // AYG: exteraGram's "Show ID and DC" — one row at the end of the info block with
+    // the peer's id (raw or Bot API style) and, when the avatar says, its data centre.
+    // Tapping copies the id.
+    if let peer = data.peer, let aygIdText = aygPeerIdText(peer: peer) {
+        var aygLabel = "ID"
+        if let dc = aygPeerDatacenterId(peer: peer) {
+            aygLabel = "ID · DC\(dc)"
+        }
+        items[.peerInfoTrailing]!.append(PeerInfoScreenLabeledValueItem(id: 990001, label: aygLabel, text: aygIdText, textColor: .primary, action: { _, _ in
+            UIPasteboard.general.string = aygIdText
+        }, requestLayout: { animated in
+            interaction.requestLayout(animated)
+        }))
+    }
+    
     var result: [(AnyHashable, [PeerInfoScreenItem])] = []
     for section in InfoSection.allCases {
         if let sectionItems = items[section], !sectionItems.isEmpty {
@@ -907,6 +922,37 @@ func infoItems(
         }
     }
     return result
+}
+
+// AYG: the id as exteraGram's "Show ID and DC" prints it, or nil while that row is off.
+private func aygPeerIdText(peer: EnginePeer) -> String? {
+    let rawId = peer.id.id._internalGetInt64Value()
+    switch AYGExteraManager.shared.showIdAndDc {
+    case .hidden:
+        return nil
+    case .telegramApi:
+        return "\(rawId)"
+    case .botApi:
+        switch peer {
+        case .channel:
+            return "-100\(rawId)"
+        case .legacyGroup:
+            return "-\(rawId)"
+        default:
+            return "\(rawId)"
+        }
+    }
+}
+
+// AYG: the data centre a peer's avatar is stored on, which is the peer's home DC — the
+// same source exteraGram reads (`photo.dc_id`). Nil when there is no avatar.
+private func aygPeerDatacenterId(peer: EnginePeer) -> Int? {
+    for representation in peer.profileImageRepresentations {
+        if let resource = representation.resource as? CloudPeerPhotoSizeMediaResource {
+            return resource.datacenterId
+        }
+    }
+    return nil
 }
 
 func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, state: PeerInfoState, chatLocation: ChatLocation, context: AccountContext, presentationData: PresentationData, interaction: PeerInfoInteraction) -> [(AnyHashable, [PeerInfoScreenItem])] {

@@ -153,7 +153,8 @@ private final class MultipartUploadManager {
         if increaseParallelParts {
             self.parallelParts = 30
         } else {
-            self.parallelParts = 3
+            // AYG: exteraGram's "Upload Speed Boost".
+            self.parallelParts = AYGExteraManager.shared.boostedUploadParallelParts(3)
         }
         
         self.forceNoBigParts = forceNoBigParts

@@ -17,5 +17,11 @@ public func aygCategoryController(context: AccountContext, category: AYGSettings
         return aygFiltersController(context: context)
     case .customization:
         return aygCustomizationController(context: context)
+    case .general:
+        return aygExteraController(context: context, screen: .general)
+    case .chats:
+        return aygExteraController(context: context, screen: .chats)
+    case .appearance:
+        return aygExteraController(context: context, screen: .appearance)
     }
 }

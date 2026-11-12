@@ -419,6 +419,9 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
             let incoming = item.content.effectivelyIncoming(item.context.account.peerId, associatedData: item.associatedData)
             var imageSize: CGSize = CGSize(width: 100.0, height: 100.0)
             if let telegramFile = telegramFile {
+                // AYG: exteraGram's sticker size slider.
+                let aygStickerScale = CGFloat(AYGExteraManager.shared.stickerScale)
+                let displaySize = CGSize(width: floor(displaySize.width * aygStickerScale), height: floor(displaySize.height * aygStickerScale))
                 if let dimensions = telegramFile.dimensions {
                     imageSize = dimensions.cgSize.aspectFitted(displaySize)
                 } else if let thumbnailSize = telegramFile.previewRepresentations.first?.dimensions {
@@ -535,7 +538,8 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
                     }
                 }
                 
-                if item.associatedData.isCopyProtectionEnabled || item.message.isCopyProtected() {
+                // AYG: exteraGram's "Hide Share Button" goes the copy-protection way.
+                if item.associatedData.isCopyProtectionEnabled || item.message.isCopyProtected() || AYGExteraManager.shared.hideShareButton {
                     if hasCommentButton(item: item) {
                     } else {
                         needsShareButton = false
@@ -654,6 +658,9 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
             ))
             
             let (dateAndStatusSize, dateAndStatusApply) = statusSuggestedWidthAndContinue.1(statusSuggestedWidthAndContinue.0)
+            // AYG: exteraGram's "Hide Sticker Time". Kept while the status carries
+            // reactions, or while an outgoing sticker is still sending or failed.
+            let aygHideStickerStatus = AYGExteraManager.shared.hideStickerTime && telegramFile != nil && dateReactionsAndPeers.reactions.isEmpty && !item.message.flags.contains(.Unsent) && !item.message.flags.contains(.Failed)
             
             var viaBotApply: (TextNodeLayout, () -> TextNode)?
             let threadInfoApply: (CGSize, (Bool) -> ChatMessageThreadInfoNode)? = nil
@@ -1075,6 +1082,8 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
                     dateAndStatusApply(animation)
                     if case .customChatContents = item.associatedData.subject {
                         strongSelf.dateAndStatusNode.isHidden = true
+                    } else {
+                        strongSelf.dateAndStatusNode.isHidden = aygHideStickerStatus
                     }
                     
                     if let updatedShareButtonNode = updatedShareButtonNode {
@@ -1472,7 +1481,8 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
                     case let .optionalAction(f):
                         f()
                     case let .openContextMenu(openContextMenu):
-                        if canAddMessageReactions(message: EngineMessage(item.message)) {
+                        if (gesture == .doubleTap && AYGExteraManager.shared.overridesDoubleTap(outgoing: !item.message.effectivelyIncoming(item.context.account.peerId))) || canAddMessageReactions(message: EngineMessage(item.message)) {
+                            // AYG: exteraGram's double-tap action; ChatController routes it.
                             item.controllerInteraction.updateMessageReaction(openContextMenu.tapMessage, .default, false, nil)
                         } else {
                             item.controllerInteraction.openMessageContextMenu(openContextMenu.tapMessage, openContextMenu.selectAll, self, openContextMenu.subFrame, nil, nil)

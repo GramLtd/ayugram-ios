@@ -160,12 +160,15 @@ final class MentionChatInputContextPanelNode: ChatInputContextPanelNode {
                             }
                             
                             if let range = mentionQueryRange {
+                                // AYG: exteraGram's "Add Comma After Mention" — only for a
+                                // mention that opens the message (the query starts after "@").
+                                let aygMentionSuffix = (AYGExteraManager.shared.addCommaAfterMention && range.location <= 1) ? ", " : " "
                                 if let addressName = peer.addressName, !addressName.isEmpty {
-                                    return (textInputState.replacingFlatRange(range, with: addressName + " "), inputMode)
+                                    return (textInputState.replacingFlatRange(range, with: addressName + aygMentionSuffix), inputMode)
                                 } else if !peer.compactDisplayTitle.isEmpty {
                                     let replacementText = NSMutableAttributedString()
                                     replacementText.append(NSAttributedString(string: peer.compactDisplayTitle, attributes: [ChatTextInputAttributes.textMention: ChatTextInputTextMentionAttribute(peerId: peer.id)]))
-                                    replacementText.append(NSAttributedString(string: " "))
+                                    replacementText.append(NSAttributedString(string: aygMentionSuffix))
 
                                     // The widened range eats the leading "@" as well as the query.
                                     let updatedRange = NSRange(location: range.location - 1, length: range.length + 1)

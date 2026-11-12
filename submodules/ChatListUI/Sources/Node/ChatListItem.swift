@@ -793,7 +793,8 @@ private func revealOptions(strings: PresentationStrings, theme: PresentationThem
                 if canArchivePeer(id: peerId, accountPeerId: accountPeerId) {
                     options.append(ItemListRevealOption(key: RevealOptionKey.archive.rawValue, title: strings.ChatList_ArchiveAction, icon: archiveIcon, color: theme.list.itemDisclosureActions.inactive.fillColor, iconColor: theme.list.itemDisclosureActions.inactive.foregroundColor, textColor: theme.chatList.dateTextColor))
                 }
-            } else if canUnarchive {
+            } else if canUnarchive && !AYGExteraManager.shared.disableUnarchiveSwipe {
+                // AYG: exteraGram's "Disable Unarchive Swipe" drops the action here.
                 options.append(ItemListRevealOption(key: RevealOptionKey.unarchive.rawValue, title: strings.ChatList_UnarchiveAction, icon: unarchiveIcon, color: theme.list.itemDisclosureActions.inactive.fillColor, iconColor: theme.list.itemDisclosureActions.inactive.foregroundColor, textColor: theme.chatList.dateTextColor))
             }
         }

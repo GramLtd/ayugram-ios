@@ -4043,7 +4043,8 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             filterItems.append(.all(unreadCount: 0))
                         }
                     case let .filter(id, title, _, _):
-                        filterItems.append(.filter(id: id, text: title, unread: ChatListFilterTabEntryUnreadCount(value: unreadCount, hasUnmuted: hasUnmutedUnread)))
+                        // AYG: exteraGram's "Tab Counter".
+                        filterItems.append(.filter(id: id, text: title, unread: ChatListFilterTabEntryUnreadCount(value: AYGExteraManager.shared.tabCounter ? unreadCount : 0, hasUnmuted: hasUnmutedUnread)))
                 }
             }
             
@@ -7165,15 +7166,18 @@ private final class ChatListLocationContext {
         passcode: (Bool, Bool),
         stateAndFilterId: (state: ChatListNodeState, filterId: Int32?),
         isReorderingTabs: Bool,
-        peerStatus: NetworkStatusTitle.Status?,
+        peerStatus aygStockPeerStatus: NetworkStatusTitle.Status?,
         presentationData: PresentationData,
         storyPostingAvailable: Bool
     ) {
+        // AYG: exteraGram's "Hide Status in Action Bar".
+        let peerStatus: NetworkStatusTitle.Status? = AYGExteraManager.shared.hideActionBarStatus ? nil : aygStockPeerStatus
         let defaultTitle: String
         switch location {
         case let .chatList(groupId):
             if groupId == .root {
-                defaultTitle = presentationData.strings.DialogList_Title
+                // AYG: exteraGram's "Title Text".
+                defaultTitle = AYGExteraManager.shared.chatListTitle(stock: presentationData.strings.DialogList_Title)
             } else {
                 defaultTitle = presentationData.strings.ChatList_ArchivedChatsTitle
             }

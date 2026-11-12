@@ -991,7 +991,8 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
                     }
                 }
                 
-                if item.associatedData.isCopyProtectionEnabled || item.message.isCopyProtected() {
+                // AYG: exteraGram's "Hide Share Button" goes the copy-protection way.
+                if item.associatedData.isCopyProtectionEnabled || item.message.isCopyProtected() || AYGExteraManager.shared.hideShareButton {
                     if hasCommentButton(item: item) {
                     } else {
                         needsShareButton = false
@@ -1010,6 +1011,9 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
             if let _ = telegramDice {
                 imageSize = displaySize
             } else if let telegramFile = telegramFile {
+                // AYG: exteraGram's sticker size slider. Animated emoji are left alone.
+                let aygStickerScale = CGFloat(AYGExteraManager.shared.stickerScale)
+                let displaySize = CGSize(width: floor(displaySize.width * aygStickerScale), height: floor(displaySize.height * aygStickerScale))
                 if let dimensions = telegramFile.dimensions {
                     imageSize = dimensions.cgSize.aspectFitted(displaySize)
                 } else if let thumbnailSize = telegramFile.previewRepresentations.first?.dimensions {
@@ -1175,6 +1179,9 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
             ))
             
             let (dateAndStatusSize, dateAndStatusApply) = statusSuggestedWidthAndContinue.1(statusSuggestedWidthAndContinue.0)
+            // AYG: exteraGram's "Hide Sticker Time". Kept while the status carries
+            // reactions, or while an outgoing sticker is still sending or failed.
+            let aygHideStickerStatus = AYGExteraManager.shared.hideStickerTime && telegramFile != nil && dateReactionsAndPeers.reactions.isEmpty && !item.message.flags.contains(.Unsent) && !item.message.flags.contains(.Failed)
             
             var viaBotApply: (TextNodeLayout, () -> TextNode)?
             let threadInfoApply: (CGSize, (Bool) -> ChatMessageThreadInfoNode)? = nil
@@ -1705,6 +1712,8 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
                     dateAndStatusApply(animation)
                     if case .customChatContents = item.associatedData.subject {
                         strongSelf.dateAndStatusNode.isHidden = true
+                    } else {
+                        strongSelf.dateAndStatusNode.isHidden = aygHideStickerStatus
                     }
 
                     if needsReplyBackground {
@@ -2045,7 +2054,8 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
                     case let .optionalAction(f):
                         f()
                     case let .openContextMenu(openContextMenu):
-                        if canAddMessageReactions(message: EngineMessage(item.message)) {
+                        if (gesture == .doubleTap && AYGExteraManager.shared.overridesDoubleTap(outgoing: !item.message.effectivelyIncoming(item.context.account.peerId))) || canAddMessageReactions(message: EngineMessage(item.message)) {
+                            // AYG: exteraGram's double-tap action; ChatController routes it.
                             item.controllerInteraction.updateMessageReaction(item.message, .default, false, nil)
                         } else {
                             item.controllerInteraction.openMessageContextMenu(openContextMenu.tapMessage, openContextMenu.selectAll, self, openContextMenu.subFrame, nil, nil)
@@ -2054,7 +2064,8 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
                 } else if case .tap = gesture {
                     item.controllerInteraction.clickThroughMessage(self.view, location)
                 } else if case .doubleTap = gesture {
-                    if canAddMessageReactions(message: EngineMessage(item.message)) {
+                    if (gesture == .doubleTap && AYGExteraManager.shared.overridesDoubleTap(outgoing: !item.message.effectivelyIncoming(item.context.account.peerId))) || canAddMessageReactions(message: EngineMessage(item.message)) {
+                        // AYG: exteraGram's double-tap action; ChatController routes it.
                         item.controllerInteraction.updateMessageReaction(item.message, .default, false, nil)
                     }
                 }

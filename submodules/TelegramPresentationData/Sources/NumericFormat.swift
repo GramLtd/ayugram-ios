@@ -3,6 +3,10 @@ import PresentationStrings
 import TelegramCore
 
 public func compactNumericCountString(_ count: Int, decimalSeparator: String = ".", showDecimalPart: Bool = true) -> String {
+    // AYG: exteraGram's "Disable Number Rounding" — 1.23K becomes 1,234.
+    if AYGExteraManager.shared.disableNumberRounding {
+        return AYGExteraManager.groupedNumberString(count, separator: decimalSeparator == "," ? " " : ",")
+    }
     if count >= 1000 * 1000 {
         let remainder = (count % (1000 * 1000)) / (1000 * 100)
         if remainder != 0 && showDecimalPart {

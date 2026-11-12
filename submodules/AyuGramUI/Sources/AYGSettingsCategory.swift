@@ -14,6 +14,10 @@ public enum AYGSettingsCategory: Int, CaseIterable {
     case spy
     case filters
     case customization
+    // AYG: the categories carried over from exteraGram for Android.
+    case general
+    case chats
+    case appearance
 
     public var title: String {
         switch self {
@@ -21,6 +25,9 @@ public enum AYGSettingsCategory: Int, CaseIterable {
         case .spy: return aygString("CategorySpy")
         case .filters: return aygString("CategoryFilters")
         case .customization: return aygString("CategoryCustomization")
+        case .general: return aygString("CategoryGeneral")
+        case .chats: return aygString("CategoryChats")
+        case .appearance: return aygString("CategoryAppearance")
         }
     }
 
@@ -32,6 +39,9 @@ public enum AYGSettingsCategory: Int, CaseIterable {
         case .spy: return "AyuGram/AYGSpy"
         case .filters: return "AyuGram/AYGFilters"
         case .customization: return "AyuGram/AYGCustomization"
+        case .general: return "Chat/Context Menu/Settings"
+        case .chats: return "Chat/Context Menu/Chats"
+        case .appearance: return "Chat/Context Menu/Customize"
         }
     }
 

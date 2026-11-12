@@ -1312,6 +1312,10 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
             self.isInteractivelyScrollingPromise.set(true)
             //self.pinToTopStableId = nil
             self.beganDragging?()
+            // AYG: exteraGram's "Hide Keyboard on Scroll".
+            if AYGExteraManager.shared.hideKeyboardOnScroll, let chatControllerNode = self.controllerInteraction.chatControllerNode() as? ChatControllerNode {
+                chatControllerNode.dismissInput()
+            }
         }
 
         self.endedInteractiveDragging = { [weak self] _ in

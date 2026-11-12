@@ -1991,10 +1991,40 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message])
                     f(.dismissWithoutContent)
                 })))
+                // AYG: exteraGram's "Save" — straight to Saved Messages.
+                if AYGExteraManager.shared.showSaveMessageButton && message.id.peerId != context.account.peerId {
+                    let aygSaveMessages = selectAll || isImage ? messages : [message]
+                    actions.append(.action(ContextMenuActionItem(text: aygString("AYGSaveMessage", fallback: "Save"), icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Fave"), color: theme.actionSheet.primaryTextColor)
+                    }, action: { _, f in
+                        f(.dismissWithoutContent)
+                        aygSaveToSavedMessages(context: context, messages: aygSaveMessages, present: { controller in
+                            controllerInteraction.presentControllerInCurrent(controller, nil)
+                        })
+                    })))
+                }
             }
         }
         
-        if data.messageActions.options.contains(.report) {
+        // AYG: exteraGram's "Details".
+        if AYGExteraManager.shared.showDetailsButton && messages.count == 1 {
+            actions.append(.action(ContextMenuActionItem(text: aygString("AYGMessageDetails", fallback: "Details"), icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Info"), color: theme.actionSheet.primaryTextColor)
+            }, action: { _, f in
+                f(.dismissWithoutContent)
+                let aygDetails = aygMessageDetailsText(context: context, message: message)
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                controllerInteraction.presentController(textAlertController(context: context, title: aygString("AYGMessageDetails", fallback: "Details"), text: aygDetails, actions: [
+                    TextAlertAction(type: .genericAction, title: presentationData.strings.Conversation_ContextMenuCopy, action: {
+                        UIPasteboard.general.string = aygDetails
+                    }),
+                    TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})
+                ]), nil)
+            })))
+        }
+        
+        // AYG: exteraGram's "Report" toggle.
+        if data.messageActions.options.contains(.report) && AYGExteraManager.shared.showReportButton {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuReport, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Report"), color: theme.actionSheet.primaryTextColor)
             }, action: { controller, f in

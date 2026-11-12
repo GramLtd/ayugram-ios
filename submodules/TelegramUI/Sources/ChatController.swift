@@ -1793,6 +1793,14 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             if Namespaces.Message.allEphemeral.contains(message.id.namespace) {
                 return
             }
+            // AYG: exteraGram's double-tap action. Only double taps send `.default`.
+            if case .default = reaction, !force {
+                let aygAction = AYGExteraManager.shared.doubleTapAction(outgoing: !message.effectivelyIncoming(strongSelf.context.account.peerId))
+                if aygAction != .reaction {
+                    strongSelf.aygPerformDoubleTapAction(aygAction, message: message)
+                    return
+                }
+            }
             if case .default = reaction, strongSelf.chatLocation.peerId == strongSelf.context.account.peerId {
                 return
             }
@@ -11157,7 +11165,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         guard let contentData = self.contentData else {
             return
         }
-        self.chatDisplayNode.historyNode.offerNextChannelToRead = contentData.state.offerNextChannelToRead && self.presentationInterfaceState.interfaceState.selectionState == nil
+        // AYG: exteraGram's "Disable Jump to Next Channel".
+        self.chatDisplayNode.historyNode.offerNextChannelToRead = contentData.state.offerNextChannelToRead && self.presentationInterfaceState.interfaceState.selectionState == nil && !AYGExteraManager.shared.disableJumpToNextChannel
     }
     
     func displayGiveawayStatusInfo(messageId: EngineMessage.Id, giveawayInfo: PremiumGiveawayInfo) {
