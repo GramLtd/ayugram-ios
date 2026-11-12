@@ -27,7 +27,7 @@ public struct AYGImportedSession: Equatable {
     }
 }
 
-public enum AYGSessionImportError {
+public enum AYGSessionImportError: Error {
     /// The file could not be opened or is not a Telethon session database.
     case invalidFile
     /// The row was found but the key is not a 256-byte MTProto auth key.
@@ -47,7 +47,9 @@ public enum AYGSessionImportError {
 /// handshake does it (`MTDatacenterAuthMessageService`: the last 8 bytes of the digest,
 /// copied into an int64). Must match or the key is unusable.
 public func aygAuthKeyId(_ authKey: Data) -> Int64 {
-    guard let hash = MTSha1(authKey), hash.count >= 8 else {
+    // MTSha1 is `_Nonnull`, so it comes across as a non-optional Data.
+    let hash = MTSha1(authKey)
+    guard hash.count >= 8 else {
         return 0
     }
     var keyId: Int64 = 0
