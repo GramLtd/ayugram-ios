@@ -52,6 +52,13 @@ workflows:
           set -e
           xcode-select -p
           xcodebuild -version
+      - name: Install Metal toolchain
+        script: |
+          set -e
+          # Xcode 16+/26 no longer bundles the Metal toolchain; the GitHub runner images
+          # ship it, Codemagic's do not, so the .metal shaders fail to compile with
+          # "missing Metal Toolchain". Download it (no-op if already present).
+          xcodebuild -downloadComponent MetalToolchain
       - name: Write build configuration
         script: |
           set -e
