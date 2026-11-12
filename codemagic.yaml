@@ -59,6 +59,18 @@ workflows:
           # ship it, Codemagic's do not, so the .metal shaders fail to compile with
           # "missing Metal Toolchain". Download it (no-op if already present).
           xcodebuild -downloadComponent MetalToolchain
+      - name: Install ccache
+        script: |
+          set -e
+          # TDLib's CMake build (third-party/td) uses ccache as the compiler launcher.
+          # GitHub runners ship it; Codemagic's do not, so td_build fails with
+          # "ccache: command not found" (exit 127). Install it, and symlink into
+          # /usr/local/bin because Bazel runs that genrule with a fixed
+          # PATH=/bin:/usr/bin:/usr/local/bin that excludes Homebrew's /opt/homebrew/bin.
+          brew list ccache >/dev/null 2>&1 || brew install ccache
+          sudo mkdir -p /usr/local/bin
+          sudo ln -sf "$(brew --prefix)/bin/ccache" /usr/local/bin/ccache
+          /usr/local/bin/ccache --version | head -1
       - name: Write build configuration
         script: |
           set -e
