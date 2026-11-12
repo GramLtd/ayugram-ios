@@ -125,7 +125,7 @@ public func aygSessionImportController(context: AccountContext) -> ViewControlle
             return EmptyDisposable
         }
         |> runOn(Queue.concurrentDefaultQueue())
-        |> mapToSignal { session -> Signal<Int64, AYGSessionImportError> in
+        |> mapToSignal { session -> Signal<AccountRecordId, AYGSessionImportError> in
             return aygResolveImportedSelf(
                 networkArguments: context.sharedContext.networkArguments,
                 rootPath: context.sharedContext.basePath,
@@ -135,7 +135,7 @@ public func aygSessionImportController(context: AccountContext) -> ViewControlle
             |> map { peerId -> (AYGImportedSession, Int64) in
                 return (session, peerId)
             }
-            |> mapToSignal { sessionAndPeer -> Signal<Int64, AYGSessionImportError> in
+            |> mapToSignal { sessionAndPeer -> Signal<AccountRecordId, AYGSessionImportError> in
                 return aygAddImportedAccount(
                     accountManager: context.sharedContext.accountManager,
                     session: sessionAndPeer.0,

@@ -69,14 +69,14 @@ func aygPresentSessionImportLogin(from controller: ViewController, sharedContext
             return EmptyDisposable
         }
         |> runOn(Queue.concurrentDefaultQueue())
-        |> mapToSignal { session -> Signal<Int64, AYGSessionImportError> in
+        |> mapToSignal { session -> Signal<AccountRecordId, AYGSessionImportError> in
             return aygResolveImportedSelf(
                 networkArguments: sharedContext.networkArguments,
                 rootPath: sharedContext.basePath,
                 testingEnvironment: false,
                 session: session
             )
-            |> mapToSignal { peerId -> Signal<Int64, AYGSessionImportError> in
+            |> mapToSignal { peerId -> Signal<AccountRecordId, AYGSessionImportError> in
                 return aygAddImportedAccount(
                     accountManager: sharedContext.accountManager,
                     session: session,
