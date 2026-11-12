@@ -18,6 +18,9 @@ concurrency:
   group: build-ipa-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-26
@@ -125,3 +128,17 @@ jobs:
           name: AyuGram-ipa
           path: artifacts/AyuGram.ipa
           retention-days: 30
+
+      # Also publish the IPA as a GitHub Release, which (unlike run artifacts) can be
+      # downloaded from the GitHub mobile app and without unzipping.
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ayugram-build-${{ github.run_number }}
+          name: AyuGram build ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          body: |
+            Unsigned AyuGram IPA from ${{ github.ref_name }} (${{ github.sha }}).
+            Install by re-signing: Sideloadly, AltStore, TrollStore or your own certificate.
+          files: artifacts/AyuGram.ipa
