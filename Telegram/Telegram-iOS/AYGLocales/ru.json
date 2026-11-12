@@ -95,6 +95,7 @@
   "AYGSessionImportInProgress": "Импорт…",
   "AYGSessionImportInfo": "Вход в один из ваших аккаунтов из файла Telethon .session. Выберите файл — AyuGram проверит ключ и добавит аккаунт. Относитесь к файлу .session как к паролю: тот, у кого он есть, получает доступ к аккаунту.",
   "AYGSessionImportPickerUnavailable": "Выбор файла недоступен на этой версии iOS.",
+  "AYGSessionImportShort": "Сессия",
   "AYGSessionImportSuccess": "Аккаунт добавлен.",
   "AYGSessionImportTitle": "Вход по сессии",
   "AYGSizeGigabytes": "%1$d ГБ",

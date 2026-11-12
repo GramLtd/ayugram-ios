@@ -90,8 +90,15 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
             back()
         }
         
+        // AYG: "log in from an existing session" is reachable before any account exists.
+        let aygSessionItem = UIBarButtonItem(title: aygString("AYGSessionImportShort"), style: .plain, target: self, action: #selector(self.aygSessionImportPressed))
         if !otherAccountPhoneNumbers.1.isEmpty {
-            self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
+            self.navigationItem.leftBarButtonItems = [
+                UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed)),
+                aygSessionItem
+            ]
+        } else {
+            self.navigationItem.leftBarButtonItem = aygSessionItem
         }
         
         if let countriesConfiguration {
@@ -109,6 +116,11 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
     
     @objc private func cancelPressed() {
         self.back()
+    }
+
+    // AYG: open the session-import file picker from the login screen.
+    @objc private func aygSessionImportPressed() {
+        aygPresentSessionImportLogin(from: self, sharedContext: self.sharedContext, presentationData: self.presentationData)
     }
     
     func updateNavigationItems() {
