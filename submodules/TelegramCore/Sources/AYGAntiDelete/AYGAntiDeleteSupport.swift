@@ -40,7 +40,7 @@ enum AYGRuntimeEnvironment {
         guard let appGroupName = AYGRuntimeEnvironment.appGroupName else {
             return nil
         }
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+        return aygAppGroupContainerURL(appGroupName: appGroupName)
     }()
 
     /// Defaults shared with the extensions. Every AYG setting lives here now —
