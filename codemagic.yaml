@@ -1,0 +1,97 @@
+# AyuGram iOS — unsigned (fake-signed) IPA on Codemagic.
+#
+# Alternative to the GitHub Actions build (.github/workflows/build-ipa.yml) for when
+# GitHub's hosted macOS runners are unavailable. Same steps: fetch submodules, write a
+# non-App-Store build configuration, build with Bazel via Make.py (flavor `ayu`), collect
+# the IPA. The IPA is unsigned — re-sign it with Sideloadly / AltStore / TrollStore.
+#
+# One-time setup (only you can do this part):
+#   1. Sign up at codemagic.io and connect this GitHub repository (authorise the
+#      Codemagic GitHub App for GramLtd/ayugram-ios).
+#   2. In the app's settings the `ayugram-ios-ipa` workflow below is picked up from this
+#      file. Optionally add env vars TELEGRAM_API_ID / TELEGRAM_API_HASH (group `telegram`)
+#      to use your own api pair instead of Telegram's public one.
+#   3. Start a build on branch claude/serene-galileo-fm9thu.
+#
+# Confirm the Xcode version in the Codemagic UI matches versions.json (26.6); adjust the
+# `xcode:` field below if that exact version is not offered.
+
+workflows:
+  ayugram-ios-ipa:
+    name: AyuGram iOS IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      xcode: 26.6
+      groups:
+        - telegram
+    cache:
+      cache_paths:
+        - ~/telegram-bazel-cache
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: "claude/serene-galileo-fm9thu"
+          include: true
+    scripts:
+      - name: Fetch submodules
+        script: |
+          set -e
+          # Two submodules use repository-relative URLs that only resolve on Telegram's
+          # own org; point them at the upstream copies, same as the GitHub workflow.
+          git config --file .gitmodules submodule.submodules/rlottie/rlottie.url https://github.com/TelegramMessenger/rlottie.git
+          git config --file .gitmodules submodule.submodules/TgVoipWebrtc/tgcalls.url https://github.com/TelegramMessenger/tgcalls.git
+          git submodule sync --recursive
+          git submodule update --init --recursive --jobs 8
+      - name: Select Xcode
+        script: |
+          set -e
+          WANTED=$(python3 -c 'import json;print(json.load(open("versions.json"))["xcode"])')
+          if [ -d "/Applications/Xcode_${WANTED}.app" ]; then
+            XCODE="/Applications/Xcode_${WANTED}.app"
+          else
+            XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+            echo "Xcode ${WANTED} not found, using ${XCODE}"
+          fi
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      - name: Write build configuration
+        script: |
+          set -e
+          mkdir -p build-input
+          python3 - <<'EOF'
+          import json, os
+          config = json.load(open("build-system/appstore-configuration.json"))
+          if os.environ.get("TELEGRAM_API_ID") and os.environ.get("TELEGRAM_API_HASH"):
+              config["api_id"] = os.environ["TELEGRAM_API_ID"]
+              config["api_hash"] = os.environ["TELEGRAM_API_HASH"]
+          config["is_appstore_build"] = "false"
+          config["enable_icloud"] = False
+          config["enable_siri"] = False
+          json.dump(config, open("build-input/ci-configuration.json", "w"), indent=2)
+          EOF
+      - name: Build
+        script: |
+          set -ex
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+          build-system/XTGXcodeConfig.sh
+          BUILD_NUMBER=$(( $(git rev-list --count HEAD) + $(cat build_number_offset) ))
+          python3 -u build-system/Make/Make.py --overrideXcodeVersion \
+            --cacheDir ~/telegram-bazel-cache \
+            build \
+            --configurationPath build-input/ci-configuration.json \
+            --codesigningInformationPath build-system/fake-codesigning \
+            --flavor ayu \
+            --buildNumber="$BUILD_NUMBER" \
+            --configuration=release_arm64
+      - name: Collect IPA
+        script: |
+          set -e
+          mkdir -p artifacts
+          IPA=$(find -L bazel-out -path '*/bin/Telegram/Telegram.ipa' -print 2>/dev/null | head -1)
+          [ -n "$IPA" ] || IPA=bazel-bin/Telegram/Telegram.ipa
+          cp "$IPA" artifacts/AyuGram.ipa
+          ls -la artifacts
+    artifacts:
+      - artifacts/AyuGram.ipa
