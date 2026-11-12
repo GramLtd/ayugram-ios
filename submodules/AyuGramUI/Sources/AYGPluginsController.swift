@@ -346,9 +346,10 @@ private func aygPluginUrlInputController(context: AccountContext, completion: @e
             rightNavigationButton: rightNavigationButton,
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)
         )
+        let entries: [AYGPluginUrlEntry] = [.url(url), .info(aygString("AYGPluginsInstallUrlInfo"))]
         let listState = ItemListNodeState(
             presentationData: ItemListPresentationData(presentationData),
-            entries: [.url(url), .info(aygString("AYGPluginsInstallUrlInfo"))],
+            entries: entries,
             style: .blocks,
             animateChanges: false
         )
