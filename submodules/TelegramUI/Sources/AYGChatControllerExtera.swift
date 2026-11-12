@@ -11,7 +11,7 @@ import Pasteboard
 // AYG: exteraGram's double-tap actions, run from `updateMessageReaction` when a double
 // tap arrives with the `.default` reaction and the user picked something other than
 // the stock quick reaction (`AYGExteraManager.doubleTapAction(outgoing:)`).
-extension ChatController {
+extension ChatControllerImpl {
     func aygPerformDoubleTapAction(_ action: AYGDoubleTapAction, message: EngineRawMessage) {
         switch action {
         case .reaction, .disabled:
