@@ -44,17 +44,13 @@ workflows:
           git config --file .gitmodules submodule.submodules/TgVoipWebrtc/tgcalls.url https://github.com/TelegramMessenger/tgcalls.git
           git submodule sync --recursive
           git submodule update --init --recursive --jobs 8
-      - name: Select Xcode
+      # Xcode is selected by the `xcode:` field under `environment` above — Codemagic
+      # activates it, so there is no GitHub-style /Applications/Xcode_<ver>.app to pick
+      # here. Just report which one is active.
+      - name: Show Xcode
         script: |
           set -e
-          WANTED=$(python3 -c 'import json;print(json.load(open("versions.json"))["xcode"])')
-          if [ -d "/Applications/Xcode_${WANTED}.app" ]; then
-            XCODE="/Applications/Xcode_${WANTED}.app"
-          else
-            XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
-            echo "Xcode ${WANTED} not found, using ${XCODE}"
-          fi
-          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcode-select -p
           xcodebuild -version
       - name: Write build configuration
         script: |
