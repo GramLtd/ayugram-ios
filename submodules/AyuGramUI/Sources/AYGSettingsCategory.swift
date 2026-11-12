@@ -18,6 +18,8 @@ public enum AYGSettingsCategory: Int, CaseIterable {
     case general
     case chats
     case appearance
+    // AYG: logging in from an existing Telethon `.session` file.
+    case sessionImport
 
     public var title: String {
         switch self {
@@ -28,6 +30,7 @@ public enum AYGSettingsCategory: Int, CaseIterable {
         case .general: return aygString("CategoryGeneral")
         case .chats: return aygString("CategoryChats")
         case .appearance: return aygString("CategoryAppearance")
+        case .sessionImport: return aygString("AYGSessionImportTitle")
         }
     }
 
@@ -42,6 +45,7 @@ public enum AYGSettingsCategory: Int, CaseIterable {
         case .general: return "Chat/Context Menu/Settings"
         case .chats: return "Chat/Context Menu/Chats"
         case .appearance: return "Chat/Context Menu/Customize"
+        case .sessionImport: return "Chat/Context Menu/AddUser"
         }
     }
 

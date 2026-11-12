@@ -23,5 +23,7 @@ public func aygCategoryController(context: AccountContext, category: AYGSettings
         return aygExteraController(context: context, screen: .chats)
     case .appearance:
         return aygExteraController(context: context, screen: .appearance)
+    case .sessionImport:
+        return aygSessionImportController(context: context)
     }
 }

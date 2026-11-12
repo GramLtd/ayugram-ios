@@ -15,6 +15,8 @@ swift_library(
         "//submodules/TelegramApi:TelegramApi",
         "//submodules/MtProtoKit:MtProtoKit",
         "//submodules/MediaPreuploadRegistry:MediaPreuploadRegistry",
+        # AYG: reading external Telethon/Pyrogram `.session` SQLite files for session import.
+        "//submodules/sqlcipher:sqlcipher",
         "//submodules/WebProxyTransport:WebProxyTransport",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Postbox:Postbox",
