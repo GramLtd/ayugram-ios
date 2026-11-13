@@ -108,5 +108,26 @@ workflows:
           [ -n "$IPA" ] || IPA=bazel-bin/Telegram/Telegram.ipa
           cp "$IPA" artifacts/AyuGram.ipa
           ls -la artifacts
+      - name: Publish IPA to GitHub Release
+        script: |
+          set -e
+          # Codemagic's own artifact download stalls for large IPAs on iOS Safari, so
+          # publish the IPA to a GitHub Release instead — those download reliably on a
+          # phone. Needs a GitHub token (env var GH_TOKEN, a classic PAT with `repo`
+          # scope, added in Codemagic → Environment variables). Skipped if absent.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "GH_TOKEN not set — skipping GitHub release upload."
+            exit 0
+          fi
+          brew list gh >/dev/null 2>&1 || brew install gh
+          export GH_TOKEN
+          TAG="session-import-$(date +%Y%m%d-%H%M%S)"
+          gh release create "$TAG" artifacts/AyuGram.ipa \
+            --repo GramLtd/ayugram-ios \
+            --target claude/serene-galileo-fm9thu \
+            --title "AyuGram (session import) $TAG" \
+            --notes "Unsigned AyuGram IPA built on Codemagic. Re-sign (Sideloadly / AltStore / TrollStore) and change the bundle id before installing."
+          echo "Published release $TAG"
+          gh release view "$TAG" --repo GramLtd/ayugram-ios --json assets --jq '.assets[].url'
     artifacts:
       - artifacts/AyuGram.ipa
